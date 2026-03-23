@@ -1,0 +1,39 @@
+[0m15:56:19.487958 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x766465b33a40>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x766465f26600>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x766465b33ad0>]}
+
+
+============================== 15:56:19.491019 | 9870b2eb-3ea1-4686-a693-3789e04f06e8 ==============================
+[0m15:56:19.491019 [info ] [MainThread]: Running with dbt=1.11.7
+[0m15:56:19.491350 [debug] [MainThread]: running dbt with arguments {'send_anonymous_usage_stats': 'True', 'profiles_dir': '/home/hong-mai/.dbt', 'cache_selected_only': 'False', 'introspect': 'True', 'warn_error': 'None', 'write_json': 'True', 'debug': 'False', 'no_print': 'None', 'target_path': 'None', 'partial_parse': 'True', 'log_cache_events': 'False', 'empty': 'None', 'version_check': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'log_path': 'logs', 'static_parser': 'True', 'invocation_command': 'dbt init', 'log_format': 'default', 'quiet': 'False', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'fail_fast': 'False', 'use_colors': 'True', 'printer_width': '80'}
+[0m15:56:45.208906 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x770048f84190>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x770046246cd0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x77004620f9d0>]}
+
+
+============================== 15:56:45.229275 | 6a87a06e-7bf6-4964-be2b-edcac1bd40d7 ==============================
+[0m15:56:45.229275 [info ] [MainThread]: Running with dbt=1.11.6
+[0m15:56:45.229647 [debug] [MainThread]: running dbt with arguments {'indirect_selection': 'eager', 'profiles_dir': '/home/hong-mai/.dbt', 'no_print': 'None', 'cache_selected_only': 'False', 'invocation_command': 'dbt init', 'static_parser': 'True', 'log_format': 'default', 'empty': 'None', 'version_check': 'True', 'fail_fast': 'False', 'target_path': 'None', 'log_cache_events': 'False', 'partial_parse': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'introspect': 'True', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'logs', 'debug': 'False', 'write_json': 'True', 'warn_error': 'None', 'send_anonymous_usage_stats': 'True', 'quiet': 'False'}
+[0m15:59:57.298769 [debug] [MainThread]: Starter project path: /home/hong-mai/Desktop/HONGMAI/Github/posgresql-data-warehouse/.venv/lib/python3.11/site-packages/dbt/include/starter_project
+[0m15:59:57.303535 [info ] [MainThread]: 
+Your new dbt project "core" was created!
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m15:59:57.304455 [info ] [MainThread]: Setting up your profile.
+[0m16:00:04.982565 [debug] [MainThread]: Spark adapter: Setting pyhive.hive logging to ERROR
+[0m16:00:04.982917 [debug] [MainThread]: Spark adapter: Setting thrift.transport logging to ERROR
+[0m16:00:04.983178 [debug] [MainThread]: Spark adapter: Setting thrift.protocol logging to ERROR
+[0m16:17:51.889597 [info ] [MainThread]: Profile core written to /home/hong-mai/.dbt/profiles.yml using target's profile_template.yml and your supplied values. Run 'dbt debug' to validate the connection.
+[0m16:17:51.892095 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 1266.7152, "process_in_blocks": "224440", "process_kernel_time": 0.286337, "process_mem_max_rss": "290604", "process_out_blocks": "82248", "process_user_time": 4.990594}
+[0m16:17:51.893398 [debug] [MainThread]: Command `dbt init` succeeded at 16:17:51.893239 after 1266.72 seconds
+[0m16:17:51.894014 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x77004620f6d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x77004620ddd0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x77004620fc10>]}
+[0m16:17:51.894566 [debug] [MainThread]: Flushing usage events
+[0m16:17:53.244447 [debug] [MainThread]: An error was encountered while trying to flush usage events
