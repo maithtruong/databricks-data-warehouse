@@ -1,0 +1,125 @@
+version: 2
+
+models:
+
+  # ============================================================
+  # dim_customers
+  # ============================================================
+  - name: dim_customers
+    description: "Customer dimension. One row per customer, enriched with ERP demographics and location."
+    columns:
+      - name: customer_key
+        description: "Surrogate key generated with ROW_NUMBER."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_id
+        description: "Natural customer ID from CRM."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_number
+        description: "Customer key string (cst_key)."
+        tests:
+          - not_null
+
+      - name: gender
+        description: "Resolved gender (CRM preferred, ERP as fallback)."
+        tests:
+          - accepted_values:
+              values: ['Male', 'Female', 'n/a']
+
+    tests:
+      # No customer should be missing location data (LEFT JOIN should always match after silver cleanup)
+      - dbt_utils.expression_is_true:
+          expression: "country IS NOT NULL"
+          name: customers_have_country
+
+  # ============================================================
+  # dim_products
+  # ============================================================
+  - name: dim_products
+    description: "Product dimension. Only the current (open-ended) version of each product."
+    columns:
+      - name: product_key
+        description: "Surrogate key."
+        tests:
+          - not_null
+          - unique
+
+      - name: product_number
+        description: "Natural product key."
+        tests:
+          - not_null
+          - unique
+
+      - name: category_id
+        description: "Category ID. Must exist in erp_px_cat_g1v2."
+        tests:
+          - relationships:
+              to: ref('erp_px_cat_g1v2')
+              field: id
+
+      - name: product_cost
+        description: "Unit cost. Must be non-negative."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "prd_cost >= 0"
+
+  # ============================================================
+  # fact_sales
+  # ============================================================
+  - name: fact_sales
+    description: "Sales fact table. Grain: one row per order line."
+    columns:
+      - name: order_number
+        description: "Order identifier."
+        tests:
+          - not_null
+
+      - name: product_key
+        description: "FK to dim_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_key
+
+      - name: customer_key
+        description: "FK to dim_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_key
+
+      - name: sales_amount
+        description: "Total sales amount for the line."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: quantity
+        description: "Units sold."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: price
+        description: "Unit price."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "order_date <= ship_date OR ship_date IS NULL"
+          name: order_before_ship
+      - dbt_utils.expression_is_true:
+          expression: "order_date <= due_date OR due_date IS NULL"
+          name: order_before_due
+      - dbt_utils.expression_is_true:
+          expression: "sales_amount = quantity * price OR sales_amount IS NULL"
+          name: sales_equals_qty_times_price

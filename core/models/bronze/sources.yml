@@ -1,0 +1,80 @@
+version: 2
+
+sources:
+  - name: bronze_crm
+    database: core_dev
+    schema: bronze
+    description: "Raw CRM data loaded from CSV files into the bronze layer."
+    tables:
+      - name: crm_cust_info
+        description: "Raw customer information from the CRM system."
+        columns:
+          - name: cst_id
+            description: "Customer ID (integer). May contain nulls and duplicates in raw form."
+          - name: cst_key
+            description: "Customer key string (e.g. AW000XXXXX)."
+          - name: cst_firstname
+          - name: cst_lastname
+          - name: cst_marital_status
+            description: "Raw values: S, M, or null."
+          - name: cst_gndr
+            description: "Raw values: F, M, or null."
+          - name: cst_create_date
+
+      - name: crm_prd_info
+        description: "Raw product information from the CRM system. Implements SCD Type 2."
+        columns:
+          - name: prd_id
+          - name: prd_key
+            description: "Compound key; first 5 chars encode category, remainder is product key."
+          - name: prd_nm
+          - name: prd_cost
+          - name: prd_line
+            description: "Raw values: M, R, S, T."
+          - name: prd_start_dt
+          - name: prd_end_dt
+
+      - name: crm_sales_details
+        description: "Raw sales transactions. Grain: one row per order line (order + customer + product)."
+        columns:
+          - name: sls_ord_num
+          - name: sls_prd_key
+          - name: sls_cust_id
+          - name: sls_order_dt
+            description: "Integer date in yyyyMMdd format; 0 or wrong-length values are invalid."
+          - name: sls_ship_dt
+          - name: sls_due_dt
+          - name: sls_sales
+          - name: sls_quantity
+          - name: sls_price
+
+  - name: bronze_erp
+    database: core_dev
+    schema: bronze
+    description: "Raw ERP data loaded from CSV files into the bronze layer."
+    tables:
+      - name: erp_cust_az12
+        description: "ERP customer demographics."
+        columns:
+          - name: cid
+            description: "Customer ID. Some rows prefixed with NAS; some match cst_key directly."
+          - name: bdate
+            description: "Birth date. May contain future dates (invalid)."
+          - name: gen
+            description: "Raw gender values: F, M, blank, or null."
+
+      - name: erp_loc_a101
+        description: "ERP customer location data."
+        columns:
+          - name: cid
+            description: "Customer ID with embedded hyphens that must be stripped."
+          - name: cntry
+            description: "Country code or name. Raw values include DE, US, USA, and full names."
+
+      - name: erp_px_cat_g1v2
+        description: "ERP product category reference table."
+        columns:
+          - name: id
+          - name: cat
+          - name: subcat
+          - name: maintenance

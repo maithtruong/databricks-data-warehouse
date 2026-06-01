@@ -1,0 +1,11 @@
+core_dw:
+  target: dev
+  outputs:
+    dev:
+      type: databricks
+      catalog: core_dev
+      schema: bronze           # default schema; overridden per layer in dbt_project.yml
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      threads: 4

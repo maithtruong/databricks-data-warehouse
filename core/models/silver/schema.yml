@@ -1,0 +1,217 @@
+version: 2
+
+models:
+
+  # ============================================================
+  # crm_cust_info
+  # ============================================================
+  - name: crm_cust_info
+    description: "Cleaned and deduplicated customer data from the CRM system."
+    columns:
+      - name: cst_id
+        description: "Customer ID. Nulls removed; each value is unique after deduplication."
+        tests:
+          - not_null
+          - unique
+
+      - name: cst_key
+        description: "Customer key string."
+        tests:
+          - not_null
+
+      - name: cst_firstname
+        description: "Trimmed first name."
+        tests:
+          - not_null
+          - no_leading_trailing_spaces
+
+      - name: cst_lastname
+        description: "Trimmed last name."
+        tests:
+          - no_leading_trailing_spaces
+
+      - name: cst_marital_status
+        description: "Standardized marital status."
+        tests:
+          - no_leading_trailing_spaces
+          - accepted_values:
+              values: ['Single', 'Married', 'n/a']
+
+      - name: cst_gndr
+        description: "Standardized gender."
+        tests:
+          - no_leading_trailing_spaces
+          - accepted_values:
+              values: ['Male', 'Female', 'n/a']
+
+  # ============================================================
+  # crm_prd_info
+  # ============================================================
+  - name: crm_prd_info
+    description: "Cleaned product data with SCD Type 2 history. cat_id split from prd_key."
+    columns:
+      - name: prd_id
+        description: "Unique product instance ID."
+        tests:
+          - not_null
+          - unique
+
+      - name: cat_id
+        description: "Category ID derived from the first 5 chars of the original prd_key."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('erp_px_cat_g1v2')
+              field: id
+
+      - name: prd_key
+        description: "Cleaned product key (original prd_key minus the category prefix)."
+        tests:
+          - not_null
+
+      - name: prd_nm
+        description: "Product name."
+        tests:
+          - no_leading_trailing_spaces
+
+      - name: prd_cost
+        description: "Product cost. Nulls defaulted to 0."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "product_cost >= 0"
+
+      - name: prd_line
+        description: "Standardized product line."
+        tests:
+          - accepted_values:
+              values: ['Mountain', 'Road', 'Other Sales', 'Touring', 'n/a']
+
+  # ============================================================
+  # crm_sales_details
+  # ============================================================
+  - name: crm_sales_details
+    description: "Cleaned sales transactions. Grain: order + customer + product."
+    columns:
+      - name: sls_ord_num
+        description: "Order number."
+        tests:
+          - not_null
+          - no_leading_trailing_spaces
+
+      - name: sls_prd_key
+        description: "Product key. Must exist in crm_prd_info."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('crm_prd_info')
+              field: prd_key
+
+      - name: sls_cust_id
+        description: "Customer ID. Must exist in crm_cust_info."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('crm_cust_info')
+              field: cst_id
+
+      - name: sls_price
+        description: "Unit price. Must be non-negative."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: sls_quantity
+        description: "Quantity sold. Must be non-negative."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+    tests:
+      # order date must not be after ship or due date
+      - dbt_utils.expression_is_true:
+          expression: "sls_order_dt <= sls_ship_dt OR sls_ship_dt IS NULL"
+          name: order_date_before_ship_date
+      - dbt_utils.expression_is_true:
+          expression: "sls_order_dt <= sls_due_dt OR sls_due_dt IS NULL"
+          name: order_date_before_due_date
+      # sales must equal quantity * price
+      - dbt_utils.expression_is_true:
+          expression: "sls_sales = sls_quantity * sls_price OR sls_sales IS NULL"
+          name: sales_equals_qty_times_price
+
+  # ============================================================
+  # erp_cust_az12
+  # ============================================================
+  - name: erp_cust_az12
+    description: "Cleaned ERP customer demographics. NAS prefix removed from cid."
+    columns:
+      - name: cid
+        description: "Customer ID aligned to cst_key format (AW-prefixed)."
+        tests:
+          - not_null
+          - unique
+          - dbt_utils.expression_is_true:
+              expression: "cid LIKE 'AW%'"
+              name: cid_starts_with_aw
+
+      - name: bdate
+        description: "Birth date. Future dates removed."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "bdate >= '1924-01-01' OR bdate IS NULL"
+              name: bdate_not_before_1924
+          - dbt_utils.expression_is_true:
+              expression: "bdate <= CURRENT_DATE() OR bdate IS NULL"
+              name: bdate_not_in_future
+
+      - name: gen
+        description: "Standardized gender."
+        tests:
+          - accepted_values:
+              values: ['Male', 'Female', 'n/a']
+
+  # ============================================================
+  # erp_loc_a101
+  # ============================================================
+  - name: erp_loc_a101
+    description: "Cleaned ERP location data. Hyphens removed from cid; country names standardized."
+    columns:
+      - name: cid
+        description: "Customer ID (hyphens stripped). Should align with cst_key."
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('crm_cust_info')
+              field: cst_key
+
+      - name: cntry
+        description: "Standardized country name."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "TRIM(cntry) != ''"
+              name: cntry_not_empty_string
+
+  # ============================================================
+  # erp_px_cat_g1v2
+  # ============================================================
+  - name: erp_px_cat_g1v2
+    description: >
+      ERP product category reference table. Back-filled with any cat_ids from
+      crm_prd_info that are absent in the source (handles outdated reference data).
+    columns:
+      - name: id
+        description: "Category ID. All ids present in crm_prd_info must appear here."
+        tests:
+          - not_null
+          - unique
+
+    tests:
+      # Every cat_id in crm_prd_info must have a matching row here
+      - dbt_utils.expression_is_true:
+          expression: >
+            (SELECT COUNT(*) FROM {{ ref('crm_prd_info') }} p
+             WHERE p.cat_id NOT IN (SELECT id FROM {{ this }})) = 0
+          name: all_prd_cat_ids_covered
